@@ -56,7 +56,7 @@
    	 };
 	panel_backlight: panel-backlight {
 		compatible = "gpio-backlight";
-		gpios = <&gpiob 8 GPIO_ACTIVE_HIGH>;
+		gpios = <&gpioz 7 GPIO_ACTIVE_HIGH>;
 		default-on;
 		status = "okay";
 	};
@@ -207,7 +207,7 @@
 		pinctrl-names = "default", "sleep";
 		pinctrl-0 = <&ltdc_pins_a>;
 		pinctrl-1 = <&ltdc_pins_sleep_a>;
-		enable-gpios = <&gpioe 12 GPIO_ACTIVE_HIGH>;
+		enable-gpios = <&gpioz 6 GPIO_ACTIVE_HIGH>;
 		reset-gpios = <&gpioe 11 GPIO_ACTIVE_HIGH>;
 		backlight = <&panel_backlight>;
 		status = "okay";
