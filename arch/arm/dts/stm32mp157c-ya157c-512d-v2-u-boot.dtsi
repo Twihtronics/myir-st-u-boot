@@ -24,7 +24,7 @@
 	led {
 		red {
 			label = "error";
-			gpios = <&gpioa 13 GPIO_ACTIVE_LOW>;
+			gpios = <&gpioh 7 GPIO_ACTIVE_HIGH>;
 			default-state = "off";
 			status = "okay";
 		};

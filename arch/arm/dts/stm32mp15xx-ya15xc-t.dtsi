@@ -116,19 +116,19 @@
 	panel-rgb@0 {
 		compatible = "simple-panel";
 		//backlight = <&backlight>;
-		enable-gpios = <&gpioe 12 0>;
+		enable-gpios = <&gpioz 6 0>;
 		status = "okay";
 
 		display-timings {
 			timing@0 {
-				clock-frequency = <9000000>;
-				hactive = <480>;
-				vactive = <272>;
-				hfront-porch = <2>;
-				hback-porch = <2>;
+				clock-frequency = <25000000>;
+				hactive = <800>;
+				vactive = <480>;
+				hfront-porch = <8>;
+				hback-porch = <8>;
 				hsync-len = <41>;
-				vfront-porch = <2>;
-				vback-porch = <2>;
+				vfront-porch = <8>;
+				vback-porch = <8>;
 				vsync-len = <10>;
 				hsync-active = <0>;
 				vsync-active = <0>;
@@ -143,7 +143,7 @@
 		compatible = "gpio-leds";
 		blue {
 			label = "heartbeat";
-			gpios = <&gpioa 14 GPIO_ACTIVE_HIGH>;
+			gpios = <&gpioh 7 GPIO_ACTIVE_HIGH>;
 			linux,default-trigger = "heartbeat";
 			default-state = "off";
 		};
