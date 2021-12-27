@@ -57,12 +57,12 @@
    	 };
 	*/
 
-	panel_backlight: panel-backlight {
+	/*panel_backlight: panel-backlight {
 		compatible = "gpio-backlight";
 		gpios = <&gpioz 7 GPIO_ACTIVE_HIGH>;
 		default-on;
 		status = "okay";
-	};
+	};*/
 	
 	usb_phy_tuning: usb-phy-tuning {
 		st,hs-dc-level = <2>;
@@ -206,13 +206,13 @@
     	};
 
 	panel_rgb: panel-rgb {
-		compatible = "simple-panel";
+		compatible = "myir,070tft";
 		pinctrl-names = "default", "sleep";
 		pinctrl-0 = <&ltdc_pins_a>;
 		pinctrl-1 = <&ltdc_pins_sleep_a>;
 		enable-gpios = <&gpioz 6 GPIO_ACTIVE_HIGH>;
-		reset-gpios = <&gpioe 11 GPIO_ACTIVE_HIGH>;
-		backlight = <&panel_backlight>;
+		reset-gpios = <&gpioz 7 GPIO_ACTIVE_HIGH>;
+		//backlight = <&panel_backlight>;
 		status = "okay";
 
 		port {
@@ -221,7 +221,7 @@
 					};
 				};
 
-	display-timings {
+	/*display-timings {
 			native-mode = <&timing0>;
 			timing0: timing0 { 
 			clock-frequency = <25000000>; 
@@ -234,7 +234,7 @@
 			vfront-porch = <8>; 
 			vsync-len = <4>;
 				};
-			};
+			};*/
 		};
 
 };

@@ -6,13 +6,14 @@
  * Based on Panel Simple driver
  */
 
-//#include <linux/backlight.h>
+#include <linux/backlight.h>
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/platform_device.h>
 #include <linux/regulator/consumer.h>
-
+#include <linux/gpio/consumer.h>
+#include <linux/gpio.h>
 #include <video/display_timing.h>
 #include <video/videomode.h>
 
@@ -47,9 +48,11 @@ struct myir_panel {
 	bool prepared;
 	bool enabled;
 	const struct myir_panel_desc *desc;
-	//struct backlight_device *backlight;
+	struct backlight_device *backlight;
 	struct regulator *dvdd;
 	struct regulator *avdd;
+	struct gpio_desc *enable_gpio;
+    struct gpio_desc *reset_gpio;
 };
 
 static inline struct myir_panel *to_myir_panel(struct drm_panel *panel)
@@ -125,16 +128,23 @@ static int myir_panel_get_fixed_modes(struct myir_panel *panel)
 static int myir_panel_disable(struct drm_panel *panel)
 {
 	struct myir_panel *p = to_myir_panel(panel);
+printk("test9 myir_panel\n");
 
 	if (!p->enabled)
 		return 0;
 
-	if (p->backlight) {
+	
+	/*if (p->backlight) {
 		p->backlight->props.power = FB_BLANK_POWERDOWN;
 		p->backlight->props.state |= BL_CORE_FBBLANK;
 		backlight_update_status(p->backlight);
-	}
+	}*/
 
+	printk("test 6 panel disable\n");
+	
+	gpiod_set_value_cansleep(p->enable_gpio, 0);
+	gpiod_set_value_cansleep(p->reset_gpio, 0);
+	
 	p->enabled = false;
 
 	return 0;
@@ -146,13 +156,15 @@ static int myir_panel_unprepare(struct drm_panel *panel)
 
 	if (!p->prepared)
 		return 0;
-
-	regulator_disable(p->avdd);
-
+	
+	printk("panel unprepaer\n");
+	//	regulator_disable(p->avdd);	
+	printk("panel unprepare\n");
 	/* Add a 100ms delay as per the panel datasheet */
 	msleep(100);
 
-	regulator_disable(p->dvdd);
+	gpiod_set_value_cansleep(p->enable_gpio, 0);
+	gpiod_set_value_cansleep(p->reset_gpio, 0);
 
 	p->prepared = false;
 
@@ -166,29 +178,21 @@ static int myir_panel_prepare(struct drm_panel *panel)
 
 	if (p->prepared)
 		return 0;
-/*
-	err = regulator_enable(p->dvdd);
-	if (err < 0) {
-		dev_err(panel->dev, "failed to enable dvdd: %d\n", err);
-		return err;
-	}
-*/
+	
+	printk("myir panel prepare\n");
+
 	/* Add a 100ms delay as per the panel datasheet */
-	msleep(100);
-/*
-	err = regulator_enable(p->avdd);
-	if (err < 0) {
-		dev_err(panel->dev, "failed to enable avdd: %d\n", err);
-		goto disable_dvdd;
-	}
-*/
+	msleep(10);
+	
+	gpiod_set_value_cansleep(p->enable_gpio, 1);
+	usleep_range(10, 20);
+	gpiod_set_value_cansleep(p->reset_gpio, 1);
+
+        usleep_range(10, 20);
 	p->prepared = true;
 
 	return 0;
 
-disable_dvdd:
-	regulator_disable(p->dvdd);
-	return err;
 }
 
 static int myir_panel_enable(struct drm_panel *panel)
@@ -197,12 +201,14 @@ static int myir_panel_enable(struct drm_panel *panel)
 
 	if (p->enabled)
 		return 0;
+	
+	printk("myir panel enable\n");
 
-	if (p->backlight) {
+	/*if (p->backlight) {
 		p->backlight->props.state &= ~BL_CORE_FBBLANK;
 		p->backlight->props.power = FB_BLANK_UNBLANK;
 		backlight_update_status(p->backlight);
-	}
+	}*/
 
 	p->enabled = true;
 
@@ -243,20 +249,45 @@ static const struct drm_panel_funcs myir_panel_funcs = {
 	.get_timings = myir_panel_get_timings,
 };
 
-static int myir_panel_probe(struct device *dev,
-					const struct myir_panel_desc *desc)
+static int myir_panel_probe(struct device *dev, const struct myir_panel_desc *desc)
 {
 	struct device_node *backlight;
 	struct myir_panel *panel;
-	int err;
+	int err,ret;
 
 	panel = devm_kzalloc(dev, sizeof(*panel), GFP_KERNEL);
+
 	if (!panel)
+	{
 		return -ENOMEM;
+	}
 
 	panel->enabled = false;
 	panel->prepared = false;
 	panel->desc = desc;
+
+	panel->enable_gpio = devm_gpiod_get(dev, "enable", GPIOD_OUT_HIGH);
+	
+	if (IS_ERR(panel->enable_gpio)) 
+	{
+			ret = PTR_ERR(panel->enable_gpio);
+			dev_err(dev, "cannot get enable-gpio %d\n", ret);
+			return ret;
+	}
+
+ 	printk("devm_gpiod_get probe panel->gpio :%d\n",IS_ERR(panel->enable_gpio));
+
+    panel->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
+
+	if (IS_ERR(panel->reset_gpio)) 
+	{
+			ret = PTR_ERR(panel->reset_gpio);
+			dev_err(dev, "cannot get reset-gpios %d\n", ret);
+			return ret;
+	}
+
+	printk("devm_gpiod_get probe panel->reset :%d\n",IS_ERR(panel->reset_gpio));
+	
 /*
 	panel->dvdd = devm_regulator_get(dev, "dvdd");
 	if (IS_ERR(panel->dvdd))
@@ -267,14 +298,18 @@ static int myir_panel_probe(struct device *dev,
 		return PTR_ERR(panel->avdd);
 
 	backlight = of_parse_phandle(dev->of_node, "backlight", 0);
-	if (backlight) {
+	
+	if (backlight) 
+	{
+		printk("myir panel backlight node found\n");
+
 		panel->backlight = of_find_backlight_by_node(backlight);
 		of_node_put(backlight);
 
 		if (!panel->backlight)
 			return -EPROBE_DEFER;
-	}
-*/
+	}*/
+
 	drm_panel_init(&panel->base);
 	panel->base.dev = dev;
 	panel->base.funcs = &myir_panel_funcs;
@@ -296,11 +331,14 @@ static int myir_panel_remove(struct platform_device *pdev)
 	struct myir_panel *panel = dev_get_drvdata(&pdev->dev);
 
 	drm_panel_remove(&panel->base);
-
+	drm_panel_disable(&panel->base);
 	myir_panel_disable(&panel->base);
+	myir_panel_unprepare(&panel->base);
 
 	if (panel->backlight)
 		put_device(&panel->backlight->dev);
+
+	printk("myir panel remove\n");
 
 	return 0;
 }
@@ -310,21 +348,35 @@ static void myir_panel_shutdown(struct platform_device *pdev)
 	struct myir_panel *panel = dev_get_drvdata(&pdev->dev);
 
 	myir_panel_disable(&panel->base);
+	printk("myir panel shutdown\n");
 }
 
 static const struct display_timing myir_070tft_timing = {
-/*	.pixelclock = { 33300000, 33300000, 33300000 },
-	.hactive = { 800, 800, 800 },
-	.hfront_porch = {  210, 210, 210 },
-	.hback_porch = { 46, 46, 46 },
-	.hsync_len = { 40, 40, 40 },
+   //myir ya157c
+	.pixelclock = {23000000,25000000,27000000},
+	.hactive = {800,800,800},
+	.hfront_porch = {4,8,48},
+	.hback_porch = {4,8,48},
+	.hsync_len = {2,4,8},
+	.vactive = {480,480,480},
+	.vfront_porch = {4,8,12},
+	.vback_porch = {4,8,12},
+	.vsync_len = {2,4,8},
+};
 
-	.vactive = { 480, 480, 480 },
-	.vfront_porch = { 22, 22, 22 },
-	.vback_porch = { 23, 23, 23 },
-	.vsync_len = { 1, 1, 1 },
-*/
+static const struct myir_panel_desc myir_070tft = {
+	.timings = &myir_070tft_timing,
+	.num_timings = 1,
+	.bpc = 8,
+	.size = {
+		.width = 97,
+		.height = 56,
 
+	},
+	.bus_format = MEDIA_BUS_FMT_RGB888_1X24,
+};
+
+/*static const struct display_timing myir_070tft_timing = {
    //myir ya157c
 	.pixelclock = {33000000,33000000,33000000},
 	.hactive = {800,800,800},
@@ -343,7 +395,7 @@ static const struct display_timing myir_070tft_timing = {
 static const struct myir_panel_desc myir_070tft = {
 	.timings = &myir_070tft_timing,
 	.num_timings = 1,
-	.bpc = 6,
+	.bpc = 6z,
 	.size = {
 		.width = 154,
 		.height = 86,
@@ -353,6 +405,7 @@ static const struct myir_panel_desc myir_070tft = {
 	//.bus_flags = DRM_BUS_FLAG_DE_HIGH | DRM_BUS_FLAG_PIXDATA_POSEDGE,
 
 };
+*/
 
 static const struct of_device_id platform_of_match[] = {
 	{
@@ -384,19 +437,25 @@ static struct platform_driver myir_panel_platform_driver = {
 	.remove = myir_panel_remove,
 	.shutdown = myir_panel_shutdown,
 };
-module_platform_driver(myir_panel_platform_driver);
+//module_platform_driver(myir_panel_platform_driver);
+static int __init panel_simple_init(void)
+{
+	        int err;
 
+	 err = platform_driver_register(&myir_panel_platform_driver);
+	if (err < 0)
+		return err;
+
+		return 0;
+}
+module_init(panel_simple_init);
+static void __exit panel_simple_exit(void)
+{
+	 platform_driver_unregister(&myir_panel_platform_driver);
+
+}
+
+module_exit(panel_simple_exit);
 MODULE_AUTHOR("licy");
 MODULE_DESCRIPTION("myir 070-tft panel driver");
 MODULE_LICENSE("GPL v2");
-
-
-
-
-
-
-
-
-
-
-
