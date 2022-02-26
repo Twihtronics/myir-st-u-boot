@@ -24,12 +24,13 @@
 	led {
 		red {
 			label = "error";
-			gpios = <&gpioh 7 GPIO_ACTIVE_HIGH>;
+			gpios = <&gpioz 6 GPIO_ACTIVE_LOW>;
 			default-state = "off";
 			status = "okay";
 		};
 	};
 };
+
 
 &adc {
 	status = "disable";
