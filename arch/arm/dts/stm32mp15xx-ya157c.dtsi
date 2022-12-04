@@ -59,7 +59,7 @@
 		compatible = "gpio-leds";
 		blue {
 			label = "heartbeat";
-			gpios = <&gpioh 6 GPIO_ACTIVE_HIGH>;
+			gpios = <&gpioz 7 GPIO_ACTIVE_LOW>;
 			linux,default-trigger = "heartbeat";
 			default-state = "off";
 		};
