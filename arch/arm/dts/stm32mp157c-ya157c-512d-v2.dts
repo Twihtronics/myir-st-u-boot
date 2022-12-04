@@ -254,7 +254,7 @@
 };
 
 
-&i2c4 {
+/*&i2c4 {
 	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&i2c4_pins_a>;
 	pinctrl-1 = <&i2c4_pins_sleep_a>;
@@ -303,7 +303,7 @@
 		st,vin-control-register = <0xc0>;
 		st,usb-control-register = <0x20>;
 	};
-};
+};*/
 
 /*
 &pwr_regulators {
