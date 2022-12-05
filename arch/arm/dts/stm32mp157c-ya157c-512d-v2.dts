@@ -221,21 +221,21 @@
 					};
 				};
 
-	/*display-timings {
+		/*display-timings {
 			native-mode = <&timing0>;
 			timing0: timing0 { 
-			clock-frequency = <25000000>; 
-			hactive = <800>; 
-			vactive = <480>; 
-			hfront-porch = <8>; 
-			hback-porch = <8>; 
-			hsync-len = <4>; 
-			vback-porch = <8>; 
-			vfront-porch = <8>; 
-			vsync-len = <4>;
-				};
-			};*/
-		};
+				clock-frequency = <25000000>; 
+				hactive = <800>; 
+				vactive = <480>; 
+				hfront-porch = <8>; 
+				hback-porch = <8>; 
+				hsync-len = <4>; 
+				vback-porch = <8>; 
+				vfront-porch = <8>; 
+				vsync-len = <4>;
+			};
+		};*/
+	};
 
 };
 
@@ -262,8 +262,10 @@
 	i2c-scl-falling-time-ns = <20>;
 	clock-frequency = <400000>;
 	status = "okay";
+*/
+
 	/* spare dmas for other usage */
-	/delete-property/dmas;
+/*	/delete-property/dmas;
 	/delete-property/dma-names;
 
 	stusb1600@28 {
