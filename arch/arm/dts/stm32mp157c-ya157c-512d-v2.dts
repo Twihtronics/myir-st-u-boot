@@ -57,12 +57,14 @@
    	 };
 	*/
 
-	/*panel_backlight: panel-backlight {
+	/*
+	panel_backlight: panel-backlight {
 		compatible = "gpio-backlight";
 		gpios = <&gpioz 7 GPIO_ACTIVE_HIGH>;
 		default-on;
 		status = "okay";
-	};*/
+	};
+	*/
 	
 	usb_phy_tuning: usb-phy-tuning {
 		st,hs-dc-level = <2>;
@@ -221,7 +223,8 @@
 					};
 				};
 
-		/*display-timings {
+		/*
+		display-timings {
 			native-mode = <&timing0>;
 			timing0: timing0 { 
 				clock-frequency = <25000000>; 
@@ -234,7 +237,8 @@
 				vfront-porch = <8>; 
 				vsync-len = <4>;
 			};
-		};*/
+		};
+		*/
 	};
 
 };
@@ -254,18 +258,17 @@
 };
 
 
-/*&i2c4 {
+&i2c4 {
 	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&i2c4_pins_a>;
 	pinctrl-1 = <&i2c4_pins_sleep_a>;
 	i2c-scl-rising-time-ns = <185>;
 	i2c-scl-falling-time-ns = <20>;
 	clock-frequency = <400000>;
-	status = "okay";
-*/
+	status = "disabled";
 
 	/* spare dmas for other usage */
-/*	/delete-property/dmas;
+	/delete-property/dmas;
 	/delete-property/dma-names;
 
 	stusb1600@28 {
@@ -275,7 +278,7 @@
 		interrupt-parent = <&gpiog>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&stusb1600_pins_a>;
-		status = "okay";
+		status = "disabled";
 		vdd-supply = <&vin>;
 
 		connector {
@@ -299,13 +302,13 @@
 		interrupts-extended = <&exti_pwr 55 IRQ_TYPE_EDGE_FALLING>;
 		interrupt-controller;
 		#interrupt-cells = <2>;
-		status = "disable";
+		status = "disabled";
 
 		st,main-control-register = <0x04>;
 		st,vin-control-register = <0xc0>;
 		st,usb-control-register = <0x20>;
 	};
-};*/
+};
 
 /*
 &pwr_regulators {
@@ -315,19 +318,19 @@
 */
 /*emmc*/
 &sdmmc2 {
-        pinctrl-names = "default", "opendrain", "sleep";
-        pinctrl-0 = <&sdmmc2_b4_pins_a &sdmmc2_d47_pins_a>;
-        pinctrl-1 = <&sdmmc2_b4_od_pins_a &sdmmc2_d47_pins_a>;
-        pinctrl-2 = <&sdmmc2_b4_sleep_pins_a &sdmmc2_d47_sleep_pins_a>;
-        non-removable;
-        no-sd;
-        no-sdio;
-        st,dirpol;
-        st,negedge; 
-        bus-width = <8>;
+	pinctrl-names = "default", "opendrain", "sleep";
+	pinctrl-0 = <&sdmmc2_b4_pins_a &sdmmc2_d47_pins_a>;
+	pinctrl-1 = <&sdmmc2_b4_od_pins_a &sdmmc2_d47_pins_a>;
+	pinctrl-2 = <&sdmmc2_b4_sleep_pins_a &sdmmc2_d47_sleep_pins_a>;
+	non-removable;
+	no-sd;
+	no-sdio;
+	st,dirpol;
+	st,negedge; 
+	bus-width = <8>;
 	vmmc-supply = <&vmmc>;
-        vqmmc-supply = <&vmmc>;
-        status = "okay";
+	vqmmc-supply = <&vmmc>;
+	status = "okay";
 };
 
 /*SD card*/
